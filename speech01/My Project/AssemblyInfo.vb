@@ -14,7 +14,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyDescription("FC2ライブのコメントを読み上げます")> 
 <Assembly: AssemblyCompany("")> 
 <Assembly: AssemblyProduct("FC2Live Comment Talker")> 
-<Assembly: AssemblyCopyright("Copyright ©  2013-2014 by Juan Gotoh")> 
+<Assembly: AssemblyCopyright("Copyright ©  2013-2015 by Juan Gotoh")> 
 <Assembly: AssemblyTrademark("")> 
 
 <Assembly: ComVisible(False)> 
@@ -34,6 +34,6 @@ Imports System.Runtime.InteropServices
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
 <Assembly: AssemblyVersion("1.1.2.0")> 
-<Assembly: AssemblyFileVersion("1.1.2.0")> 
+<Assembly: AssemblyFileVersion("1.1.3.0")> 
 
 <Assembly: NeutralResourcesLanguageAttribute("")> 

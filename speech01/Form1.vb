@@ -50,10 +50,10 @@ Public Class Form1
     Dim localAddr As IPAddress = IPAddress.Parse("127.0.0.1")
     Dim volume As Integer
     Dim isTextChanged As Boolean = False
-    Dim namestr As String
-    Dim commentstr As String
-    Dim transname As String
-    Dim transcomment As String
+    Dim namestr As String = ""
+    Dim commentstr As String = ""
+    Dim transname As String = ""
+    Dim transcomment As String = ""
     Dim insertLog As Boolean = False
     Dim chlock As Boolean
     Dim c_channel As String
@@ -70,6 +70,10 @@ Public Class Form1
     Dim logBlock As Boolean = False
     Dim logBuffer As String = ""
     Dim translating As Boolean = False
+    Dim logParent As String = System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
+    Dim logDir As String = My.Application.Info.Title
+    Dim logName As String = "Comment.log"
+    Dim oldlog As String = ""
 
     Private Function convlongsound(str As String) As String
         Dim l As String = ""
@@ -176,14 +180,12 @@ Public Class Form1
 
     'コメントログ書き出し
     Private Sub WriteCommentLog(ByRef str As String)
-        Dim parent As String = System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
-        Dim mydir As String = My.Application.Info.Title
-        'Dim path As String = System.IO.Path.Combine(parent, mydir, "Comment.log")
-        Dim path As String = System.IO.Path.Combine(parent, mydir)
+        'Dim path As String = System.IO.Path.Combine(parent, logDir, "Comment.log")
+        Dim path As String = System.IO.Path.Combine(logParent, logDir)
         If Not System.IO.File.Exists(path) Then
             System.IO.Directory.CreateDirectory(path)
         End If
-        path = System.IO.Path.Combine(path, "Comment.log")
+        path = System.IO.Path.Combine(path, logName)
         Dim logFile = New System.IO.StreamWriter(path, True, System.Text.Encoding.UTF8)
         logFile.WriteLine(str)
         logFile.Close()
@@ -316,9 +318,6 @@ Public Class Form1
                                     If My.Settings.Channel <> result.channel Then
                                         Form1.Form1Instance.chStr = chStr
                                         My.Settings.Channel = result.channel
-                                        Form1.Form1Instance.logBlock = True
-                                        Form1.Form1Instance.WriteCommentLog("■■■■チャンネル:" + chStr)
-                                        Form1.Form1Instance.getChannelInfo()
                                     End If
                                     Form1.Form1Instance.chStr = chStr
                                     My.Settings.Channel = result.channel
@@ -339,8 +338,6 @@ Public Class Form1
 
                                 Form1.Form1Instance.commentstr = result.comment
                                 Form1.Form1Instance.insertLog = True
-                                'AddLog()
-                                'SetLog(namestr, commentstr)
                                 Form1.Form1Instance.isTextChanged = True
 
                                 Dim str As String = result.comment
@@ -446,7 +443,6 @@ Public Class Form1
             Dim lang As String = "ja"
             Dim transStr As String = ""
             Dim outStr As String = ""
-
             If My.Settings.MultiLang Then
                 For i = 0 To l - 1
                     ch = str.Chars(i)
@@ -505,46 +501,47 @@ Public Class Form1
 
             Form1.Form1Instance.transcomment = ""
             outStr = str
-
             If My.Settings.Bouyomi And lang = "ja" Then
                 TalkBouyomi(outStr)
             Else
                 sapiSyn.SelectVoice(vname)
                 Console.WriteLine(sapiSyn.Voice.Name)
+                
                 Try
                     sapiSyn.SetOutputToDefaultAudioDevice()
                     sapiSyn.Volume = vol
                     sapiSyn.Rate = speed
-                    sapiSyn.Speak(outStr)
-                    'speaker.Speakssml(outStr)
+                    If My.Settings.Translate And lang <> "ja" And Not isname Then
+                        sapiSyn.Speak(outStr)
+                    Else
+                        If My.Settings.Async And Not isname Then
+                            sapiSyn.SpeakAsync(outStr)
+                        Else
+                            sapiSyn.Speak(outStr)
+                        End If
+
+                    End If
+
                 Catch ex As Exception
 
                 End Try
             End If
             If My.Settings.Translate And lang <> "ja" And Not isname Then
 
-                If isname Then
-
-                Else
+                If Not isname Then
                     While Form1.Form1Instance.isTextChanged
                     End While
-                    Form1.Form1Instance.translating = True
-                    Form1.Form1Instance.transcomment = "(翻訳中)"
-                    Form1.Form1Instance.isTextChanged = True
                     transStr = Translate(str, lang)
-                    Form1.Form1Instance.translating = False
-                    While Form1.Form1Instance.isTextChanged
-                    End While
-
-                    Form1.Form1Instance.transcomment = "【訳：" + transStr + "】"
-                    'Form1.Form1Instance.insertLog = True
+                    Form1.Form1Instance.transcomment = transStr
                     Form1.Form1Instance.isTextChanged = True
+
                 End If
 
-                ' Form1.Form1Instance.insertLog = True
+                Form1.Form1Instance.insertLog = True
+                While Form1.Form1Instance.isTextChanged
+                End While
                 Form1.Form1Instance.isTextChanged = True
 
-                'outStr = "<?xml version=""1.0""?><speak version=""1.0"" xmlns=""http://www.w3.org/2001/10/synthesis""  xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xsi:schemaLocation=""http://www.w3.org/2001/10/synthesis http://www.w3.org/TR/speech-synthesis/synthesis.xsd"" xml:lang=""ja"">" + transStr + "</speak>"
                 outStr = transStr
                 vname = My.Settings.JAvoice
                 If My.Settings.Bouyomi Then
@@ -555,28 +552,17 @@ Public Class Form1
                     Try
                         sapiSyn.SetOutputToDefaultAudioDevice()
                         sapiSyn.Volume = vol
-                        sapiSyn.Rate = speed
-                        sapiSyn.Speak(outStr)
-                        'speaker.Speakssml(outStr)
+                        If My.Settings.Async And Not isname Then
+                            sapiSyn.SpeakAsync(outStr)
+                        Else
+                            sapiSyn.Speak(outStr)
+                        End If
+
                     Catch ex As Exception
 
                     End Try
                 End If
-                'Try
-                '    sapiSyn.SelectVoice(vname)
-                '    Console.WriteLine(sapiSyn.Voice.Name)
-                'Catch ex As ArgumentException
 
-                'End Try
-                'Try
-                '    sapiSyn.SetOutputToDefaultAudioDevice()
-                '    sapiSyn.Volume = vol
-                '    sapiSyn.Rate = speed
-                '    sapiSyn.Speak(outStr)
-                '    'speaker.Speakssml(outStr)
-                'Catch ex As Exception
-
-                'End Try
             End If
 
         End Sub
@@ -618,6 +604,52 @@ Public Class Form1
         End Function
         
     End Class
+    'コメントログを読み込む
+    Private Sub loadLog()
+        Dim path As String = System.IO.Path.Combine(logParent, logDir, logName)
+        If System.IO.File.Exists(path) Then
+            Dim fi As New System.IO.FileInfo(path)
+            Dim fs As FileStream = System.IO.File.OpenRead(path)
+            Dim len As Long = fi.Length
+            Dim start As Long
+            Dim maxBytes = 102400
+            Dim buf(maxBytes) As Byte
+            Dim strBuf As String
+            Dim readcount As Long
+            If len <= maxBytes Then
+                start = 0
+            Else
+                start = len - maxBytes
+
+            End If
+            fs.Position = start
+            readcount = fs.Read(buf, 0, maxBytes)
+            fs.Close()
+            ReDim Preserve buf(readcount)
+            Dim lines() As String
+            strBuf = System.Text.Encoding.UTF8.GetString(buf)
+            strBuf = strBuf.Replace(ControlChars.NewLine, ControlChars.Lf)
+            If start > 0 Then
+                Dim p As Integer = strBuf.IndexOf(ControlChars.Lf)
+                If p >= 0 Then
+                    strBuf = strBuf.Substring(p)
+                End If
+            End If
+            strBuf = strBuf.TrimEnd
+            lines = strBuf.Split(ControlChars.Lf)
+            For Each line As String In lines
+                While ListView_Comment.Items.Count > 1000
+                    ListView_Comment.Items(0).Remove()
+                End While
+                Dim s() As String = line.Split(ControlChars.Tab)
+                If s.Length > 2 Then
+                    ListView_Comment.Items.Add(New ListViewItem({s(1), s(2)}))
+                End If
+
+            Next
+            ListView_Comment.EnsureVisible(ListView_Comment.Items.Count - 1)
+        End If
+    End Sub
 
     Private Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         myHandle = Me.Handle
@@ -651,7 +683,8 @@ Public Class Form1
             End If
         Next
 
-
+        'コメントログ読み込み
+        loadLog()
 
         ' IPアドレス＆ポート番号設定
         Dim myPort As Integer = 8888
@@ -681,6 +714,7 @@ Public Class Form1
         CheckBox_Zh.Checked = My.Settings.UseChinese
         CheckBox_NameOpt.Checked = My.Settings.ForceJAName
         CheckBox_Bouyomi.Checked = My.Settings.Bouyomi
+        CheckBox_Async.Checked = My.Settings.Async
         langRefresh()
         TextBox_Limit.Text = My.Settings.Length.ToString
         TextBox_Suffix.Text = My.Settings.Suffix
@@ -857,36 +891,31 @@ Public Class Form1
             If insertLog Then
                 insertLog = False
                 ListView_Comment.Items.Add(New ListViewItem({"", ""}))
+
                 While ListView_Comment.Items.Count > 1000
                     ListView_Comment.Items(0).Remove()
                 End While
 
             End If
-            ListView_Comment.Items(ListView_Comment.Items.Count - 1) = New ListViewItem({namestr, commentstr + transcomment})
+            Dim name2 As String = namestr
+            Dim comment2 As String = commentstr
+            If transcomment.Length > 0 Then
+                name2 = "【翻訳】"
+                comment2 = transcomment
+            End If
+            Dim li As New ListViewItem({name2, comment2})
+
+            Dim logline = timestr + ControlChars.Tab + name2 + ControlChars.Tab + comment2
+            'If oldlog <> logline Then
+            ListView_Comment.Items(ListView_Comment.Items.Count - 1) = li ' New ListViewItem({namestr, commentstr + transcomment})
             ListView_Comment.EnsureVisible(ListView_Comment.Items.Count - 1)
             ListView_Comment.EndUpdate()
-            Dim logline = timestr + ControlChars.Tab + namestr + ControlChars.Tab + commentstr + transcomment
-            If transcomment.IndexOf("【訳") >= 0 Then
-                transcomment = transcomment.Substring(3, transcomment.Length - 4)
-                logline = timestr + ControlChars.Tab + "自動翻訳" + ControlChars.Tab + transcomment
-            End If
-            If logBlock Then
-                If Not translating Then
-                    logBuffer += logline + ControlChars.NewLine
-                End If
+            If oldlog <> logline Then
+                WriteCommentLog(logline)
 
-            Else
-
-                logBuffer = logBuffer.TrimEnd()
-                If logBuffer.Length > 0 Then
-                    WriteCommentLog(logBuffer)
-                    logBuffer = ""
-                End If
-                If Not translating Then
-                    WriteCommentLog(logline)
-                End If
             End If
-            transcomment = ""
+            oldlog = logline
+
             isTextChanged = False
 
 
@@ -1178,11 +1207,11 @@ Public Class Form1
             If js("status") = 1 Then
                 Dim title As String = js("data")("channel_data")("title")
                 Dim name As String = js("data")("profile_data")("name")
-                If Label_title.Text <> title Then
-                    WriteCommentLog("■■■■配信者:" + name)
-                    WriteCommentLog("■■■■タイトル:" + title)
-                    logBlock = False
-                End If
+                'If Label_title.Text <> title Then
+                '    WriteCommentLog("■■■■配信者:" + name)
+                '    WriteCommentLog("■■■■タイトル:" + title)
+                '    logBlock = False
+                'End If
                 Label_count.Text = js("data")("channel_data")("count").ToString
                 Label_title.Text = title
                 Label_name.Text = name
@@ -1236,5 +1265,9 @@ Public Class Form1
     Private Sub LinkLabel1_LinkClicked(sender As Object, e As LinkLabelLinkClickedEventArgs) Handles LinkLabel1.LinkClicked
         LinkLabel_ClientID.LinkVisited = True
         System.Diagnostics.Process.Start("http://chi.usamimi.info/Program/Application/BouyomiChan/")
+    End Sub
+
+    Private Sub CheckBox_Async_CheckedChanged(sender As Object, e As EventArgs) Handles CheckBox_Async.CheckedChanged
+        My.Settings.Async = CheckBox_Async.Checked
     End Sub
 End Class

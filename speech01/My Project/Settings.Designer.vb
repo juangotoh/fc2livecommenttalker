@@ -363,6 +363,18 @@ Namespace My
                 Me("Bouyomi") = value
             End Set
         End Property
+        
+        <Global.System.Configuration.UserScopedSettingAttribute(),  _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
+         Global.System.Configuration.DefaultSettingValueAttribute("False")>  _
+        Public Property Async() As Boolean
+            Get
+                Return CType(Me("Async"),Boolean)
+            End Get
+            Set
+                Me("Async") = value
+            End Set
+        End Property
     End Class
 End Namespace
 
