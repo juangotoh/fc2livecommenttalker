@@ -2,6 +2,9 @@
 <a href="http://live.fc2.com/">FC2ライブ</a>のコメントを読み上げるアプリケーション。Windows xp以降用
 .NET 4.0以降が必要。
 
+開発言語:VisualBasic.NET<br>
+開発環境:VisualStudio 2013
+
 FC2ライブのコメントを読み上げます。基本的にWindowsのText to Speech機能を使用しますが、
 オプションで「棒読みちゃん」に読ませる事も可能です。
 
