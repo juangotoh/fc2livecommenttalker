@@ -73,7 +73,6 @@ Public Class Form1
     Dim logParent As String = System.Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)
     Dim logDir As String = My.Application.Info.Title
     Dim logName As String = "Comment.log"
-    Dim oldlog As String = ""
 
     Private Function convlongsound(str As String) As String
         Dim l As String = ""
@@ -207,8 +206,8 @@ Public Class Form1
                 myClient.objSck = myTcpClient
                 myClient.objStm = myTcpClient.GetStream()
                 ' クライアントとの送受信開始
-                Dim myClientThread As New Thread( _
-                    New ThreadStart(AddressOf myClient.ReadWrite))
+                Dim myClientThread As New Thread(New ThreadStart(AddressOf myClient.ReadWrite))
+                myClientThread.IsBackground = True
                 myClientThread.Start()
 
             End While
@@ -514,7 +513,7 @@ Public Class Form1
                     If My.Settings.Translate And lang <> "ja" And Not isname Then
                         sapiSyn.Speak(outStr)
                     Else
-                        If My.Settings.Async And Not isname Then
+                        If My.Settings.Async Then
                             sapiSyn.SpeakAsync(outStr)
                         Else
                             sapiSyn.Speak(outStr)
@@ -552,7 +551,7 @@ Public Class Form1
                     Try
                         sapiSyn.SetOutputToDefaultAudioDevice()
                         sapiSyn.Volume = vol
-                        If My.Settings.Async And Not isname Then
+                        If My.Settings.Async Then
                             sapiSyn.SpeakAsync(outStr)
                         Else
                             sapiSyn.Speak(outStr)
@@ -903,18 +902,24 @@ Public Class Form1
                 name2 = "【翻訳】"
                 comment2 = transcomment
             End If
+            transcomment = ""
+            namestr = ""
+            commentstr = ""
             Dim li As New ListViewItem({name2, comment2})
 
             Dim logline = timestr + ControlChars.Tab + name2 + ControlChars.Tab + comment2
-            'If oldlog <> logline Then
-            ListView_Comment.Items(ListView_Comment.Items.Count - 1) = li ' New ListViewItem({namestr, commentstr + transcomment})
-            ListView_Comment.EnsureVisible(ListView_Comment.Items.Count - 1)
-            ListView_Comment.EndUpdate()
-            If oldlog <> logline Then
-                WriteCommentLog(logline)
+
+            If (comment2.Length > 0 Or name2.Length > 0) Then
+                ListView_Comment.Items(ListView_Comment.Items.Count - 1) = li ' New ListViewItem({namestr, commentstr + transcomment})
+                ListView_Comment.EnsureVisible(ListView_Comment.Items.Count - 1)
 
             End If
-            oldlog = logline
+            ListView_Comment.EndUpdate()
+
+            If comment2.Length > 0 Or name2.Length > 0 Then
+
+                WriteCommentLog(logline)
+            End If
 
             isTextChanged = False
 
