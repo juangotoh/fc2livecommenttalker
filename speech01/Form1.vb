@@ -407,7 +407,7 @@ Public Class Form1
                 bw.Write(bMessage)
                 tc.Close()
             Catch ex As Exception
-
+                MessageBox.Show("棒読みちゃんと通信できません", "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End Try
            
         End Sub
