@@ -489,7 +489,10 @@ Public Class Form1
                 Case 1
                     lang = "ja"
                     vname = My.Settings.JAvoice
-                    str = Form1.Form1Instance.dict(str)
+                    If Not My.Settings.Bouyomi Then
+                        str = Form1.Form1Instance.dict(str)
+                    End If
+
                 Case 2
                     vname = My.Settings.KOVoice
                     lang = "ko"
@@ -1186,37 +1189,18 @@ Public Class Form1
         Dim curChannel As String = TextBox_Channel.Text
         Dim url As String = "http://live.fc2.com/api/memberApi.php?streamid=" + curChannel + "&channel=1&profile=1"
         Dim wc As WebClient = New WebClient()
-        Dim st As Stream = Nothing
         Try
-            'Dim st As Stream = wc.OpenRead(url1)
-            st = wc.OpenRead(url)
-        Catch ex As WebException
-            If st IsNot Nothing Then
-                st.Close()
-
-            End If
-            Return
-        End Try
-
-        Dim enc As Encoding = Encoding.GetEncoding("utf-8")
-        Dim sr As StreamReader = New StreamReader(st, enc)
-        Dim html As String = sr.ReadToEnd()
-        sr.Close()
-
-        st.Close()
-        Try
-
-
+            Dim st As Stream= wc.OpenRead(url)
+            Dim enc As Encoding = Encoding.GetEncoding("utf-8")
+            Dim sr As StreamReader = New StreamReader(st, enc)
+            Dim html As String = sr.ReadToEnd()
+            sr.Close()
+            st.Close()
             Dim js As Object = JsonConvert.DeserializeObject(html)
 
             If js("status") = 1 Then
                 Dim title As String = js("data")("channel_data")("title")
                 Dim name As String = js("data")("profile_data")("name")
-                'If Label_title.Text <> title Then
-                '    WriteCommentLog("■■■■配信者:" + name)
-                '    WriteCommentLog("■■■■タイトル:" + title)
-                '    logBlock = False
-                'End If
                 Label_count.Text = js("data")("channel_data")("count").ToString
                 Label_title.Text = title
                 Label_name.Text = name
@@ -1234,8 +1218,8 @@ Public Class Form1
                     Label_onair.ForeColor = System.Drawing.Color.Black
                 End If
             End If
-        Catch ex As Exception
-
+        Catch ex As WebException
+           
         End Try
 
     End Sub
