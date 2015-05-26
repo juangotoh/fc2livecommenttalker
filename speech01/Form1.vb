@@ -74,6 +74,7 @@ Public Class Form1
     Dim logDir As String = My.Application.Info.Title
     Dim logName As String = "Comment.log"
 
+
     Private Function convlongsound(str As String) As String
         Dim l As String = ""
 
@@ -309,17 +310,17 @@ Public Class Form1
 
                                 Dim chStr = result.channel.ToString
                                 If My.Settings.ChLock Then
-                                    If My.Settings.Channel <> result.channel Then
+                                    If My.Settings.Channel <> chStr Then
                                         Continue For
                                     End If
 
                                 Else
-                                    If My.Settings.Channel <> result.channel Then
+                                    If My.Settings.Channel <> chStr Then
                                         Form1.Form1Instance.chStr = chStr
-                                        My.Settings.Channel = result.channel
+                                        My.Settings.Channel = chStr
                                     End If
                                     Form1.Form1Instance.chStr = chStr
-                                    My.Settings.Channel = result.channel
+                                    My.Settings.Channel = chStr
                                 End If
                                 If result.ng_flg <> 0 Then
                                     result.comment = "NGコメントまたはNGユーザーです"
@@ -938,7 +939,8 @@ Public Class Form1
 
             ' クライアント接続待ち開始
             Dim myServerThread As New Thread(New ThreadStart(AddressOf ServerThread))
-            myServerThread.Start()
+            
+                myServerThread.Start()
         End If
     End Sub
 
